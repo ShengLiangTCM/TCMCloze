@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经络完形填空（智能统计版）</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: rgba(37, 99, 235, 0.1);
+            --purple: #8b5cf6;
+            --gray: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-base: #444;
+            --text-light: #333;
+            --border-gray: #94a3b8;
+            --bg-page: #f9f9f9;
+            --bg-card: #fff;
+            --shadow-sm: 0 4px 15px rgba(0,0,0,0.05);
+            --shadow-btn: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px calc(70px + env(safe-area-inset-bottom));
+            background-color: var(--bg-page);
+            color: var(--text-base);
+        }
+        .title {
+            text-align: center;
+            font-size: 24px;
+            margin: 30px 0;
+            color: var(--text-light);
+        }
+        .stat-panel {
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: var(--gray);
+        }
+        .article {
+            font-size: 19px;
+            line-height: 2.2;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+        .article p {
+            margin-bottom: 1em;
+            text-indent: 0em;
+        }
+        /* 填空公共样式 */
+        .blank-item {
+            display: inline-block;
+            min-width: 2em;
+            text-align: center;
+            margin: 0 2px;
+            transition: all 0.1s ease;
+            position: relative;
+            vertical-align: bottom;
+            height: 2.1em;
+            line-height: 2em;
+        }
+        /* 点击模式 */
+        .blank-item.click-mode {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            cursor: pointer;
+        }
+        .blank-item.click-mode:hover {
+            background-color: var(--primary-light);
+        }
+        .blank-item.click-mode.hidden {
+            color: transparent;
+        }
+        .blank-item.click-mode.hidden::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+        /* 输入框模式 */
+        .blank-item.input-mode input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-bottom: 2px solid var(--border-gray);
+            background: transparent;
+            font-size: inherit;
+            line-height: 2.2;
+            text-align: center;
+            outline: none;
+            padding: 0 4px;
+            font-family: inherit;
+        }
+        input.correct {
+            border-bottom-color: var(--success) !important;
+            color: var(--success) !important;
+            background: rgba(16, 185, 129, 0.05) !important;
+        }
+        input.wrong {
+            border-bottom-color: var(--danger) !important;
+            color: var(--danger) !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+        }
+        select {
+            font-family: inherit;
+            background-color: var(--bg-card);
+            border: 1px solid #cbd5e1;
+            color: var(--text-light);
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        /* 底部控制栏 */
+        .controls {
+            position: fixed;
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            z-index: 999;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 18px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: var(--shadow-btn);
+            transition: background 0.2s;
+            white-space: nowrap;
+            color: #fff;
+        }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-purple { background: var(--purple); }
+        .btn-purple:hover { background: #7c3aed; }
+        .btn-gray { background: var(--gray); }
+        .btn-gray:hover { background: #475569; }
+        .shortcut-hint {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-left: 6px;
+            background: rgba(255,255,255,0.3);
+            padding: 1px 5px;
+            border-radius: 4px;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0 10px calc(70px + env(safe-area-inset-bottom));
+            }
+            .article {
+                padding: 20px;
+                font-size: 17px;
+            }
+            .title { font-size: 20px; }
+            button { padding: 10px 5px; font-size: 13px; }
+            .shortcut-hint { display: none; }
+            .controls { gap: 3px; }
+        }
+    </style>
+</head>
+<body>
+    <h2 class="title">经络完形填空（智能统计版）</h2>
+    <div class="stat-panel" id="statPanel"></div>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <select id="mySelect" style="padding: 8px 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc;"></select>
+    </div>
+    <div class="article" id="textBox"></div>
+    <div class="controls">
+        <button id="toggleAllBtn" class="btn-primary">
+            一键显示
+            <span class="shortcut-hint">Space</span>
+        </button>
+        <button id="modeSwitchBtn" class="btn-purple">
+            切换输入
+            <span class="shortcut-hint">M</span>
+        </button>
+        <button id="resetBtn" class="btn-gray">
+            清空所有
+            <span class="shortcut-hint">R</span>
+        </button>
+    </div>
+
+<script>
+(function() {
+    // ====================== 常量配置区 ======================
+    const CONST = {
+        BLANK_REG: /【(.+?)】/g,
+        STORAGE_KEY: 'my_last_select',
+        INPUT_WIDTH_RATIO: 1.3,
+        MIN_BLANK_WIDTH: 2,
+        DELAY_DEBOUNCE: 100,
+        HOTKEYS: {
+            MODE: 'M',
+            RESET: 'R',
+            TOGGLE: 'Space'
+        }
+    };
+
+    // 原始数据
+    const myData = [
+        {id:1,name:"手太阴肺经",text:`1.	肺【手太阴】之脉，起于【中焦】，下络【大肠】，还循【胃口】，上【膈】，属【肺】，从【肺系】横出【腋下】，下循【臑内】，行【少阴】、【心主】之前，下【肘中】，循【臂内上骨下廉】，入【寸口】，上【鱼】，循【鱼际】，出【大指】之端；其支者，从【腕后】直出【次指】内廉，出其端。`},
+        {id:2,name:"手阳明大肠经",text:`2.	大肠【手阳明】之脉，起于【大指次指】之端，循【指】上廉，出【合谷两骨】之间，上入【两筋】之中，循【臂上廉】，入【肘外廉】，上【臑外前廉】，上【肩】，出【髃骨】之端，上出于【柱骨】之会上，下入【缺盆】，络【肺】，下【膈】，属【大肠】；其支者，从【缺盆】，上【颈】，贯【颊】，入【下齿】中，还出挟口，交【人中】，左之右，右之左，上挟【鼻孔】。`},
+        {id:3,name:"足阳明胃经",text:`3.	胃【足阳明】之脉，起于【鼻交頞中】，旁纳【太阳】之脉，下循【鼻外】，入【上齿】中，还出挟口环唇，下交【承浆】，却循【颐后下廉】，出【大迎】，循【颊车】，上【耳前】，过【客主人】，循【发际】，至【额颅】；其支者，从【大迎】前下【人迎】，循【喉咙】，入【缺盆】，下【膈】，属【胃】络【脾】；其直者，从【缺盆】下【乳内廉】，下挟【脐】，入【气街】中；其支者，起于【胃口】，下循【腹里】，下至【气街】中而合，以下【髀关】，抵【伏兔】，下【膝膑】中，下循【胫外廉】，下【足跗】，入【中指内间】；其支者，下【膝三寸】而别，下入【中指外间】；其支者，别【跗】上，入【大指】间，出其端。`},
+        {id:4,name:"足太阴脾经",text:`4.	脾【足太阴】之脉，起于【大指】之端，循【指内侧白肉际】，过【核骨】后，上【内踝前廉】，上【腨内】，循【胫骨】后，交出【厥阴】之前，上【膝股内前廉】，入【腹】，属【脾】络【胃】，上【膈】，挟【咽】，连【舌本】，散【舌下】；其支者，复从【胃】别，上【膈】，注【心中】。
+		脾之大络，名曰【大包】，出【渊腋】下【三寸】，布【胸胁】。`},
+        {id:5,name:"手少阴心经",text:`5.	心【手少阴】之脉，起于【心中】，出属【心系】，下【膈】，络【小肠】；其支者，从【心系】，上挟【咽】，系【目系】；其直者，复从【心系】却上【肺】，下出【腋下】，下循【臑内后廉】，行【太阴】、【心主】之后，下【肘内】，循【臂内后廉】，抵【掌后锐骨】之端，入【掌内后廉】，循【小指】之内，出其端。`},
+        {id:6,name:"手太阳小肠经",text:`6.	小肠【手太阳】之脉，起于【小指】之端，循【手外侧】上【腕】，出【踝中】，直上循【臂骨下廉】，出【肘内侧两骨】之间，上循【臑外后廉】，出【肩解】，绕【肩胛】，交【肩上】，入【缺盆】，络【心】，循【咽】，下【膈】，抵【胃】，属【小肠】；其支者，从【缺盆】，循【颈】，上【颊】，至【目锐眦】，却入【耳中】；其支者，别【颊】上【䪼】抵【鼻】，至【目内眦】，斜络于【颧】。`},
+        {id:7,name:"足太阳膀胱经",text:`7.	膀胱【足太阳】之脉，起于【目内眦】，上【额】交【巅】；其支者，从【巅】至【耳上角】；其直者，从【巅】入络【脑】，还出别下【项】，循【肩髆】内，挟【脊】抵【腰中】，入循【膂】，络【肾】属【膀胱】；其支者，从【腰中】下挟【脊】，贯【臀】入【腘中】；其支者，从【髆内左右】别，下贯【胛】，挟【脊】内，过【髀枢】，循【髀外】，从【后廉】下合【腘中】，以下贯【腨】内，出【外踝】之后，循【京骨】，至【小指】外侧。`},
+        {id:8,name:"足少阴肾经",text:`8.	肾【足少阴】之脉，起于【小指】之下，邪走【足心】，出于【然骨】之下，循【内踝】之后，别入【跟中】，以上【腨】内，出【腘内廉】，上【股内后廉】，贯【脊】，属【肾】络【膀胱】；其直者，从【肾】上贯【肝膈】，入【肺】中，循【喉咙】，挟【舌本】；其支者，从【肺】出络【心】，注【胸中】。`},
+        {id:9,name:"手厥阴心包经",text:`9.	心主【手厥阴心包络】之脉，起于【胸中】，出属【心包络】，下【膈】，历络【三焦】；其支者，循【胸】出【胁】，下【腋三寸】，上抵【腋下】，循【臑内】，行【太阴】、【少阴】之间，入【肘中】，下【臂】，行【两筋】之间，入【掌中】，循【中指】，出其端；其支者，别【掌中】，循【小指次指】，出其端。`},
+        {id:10,name:"手少阳三焦经",text:`10.	三焦【手少阳】之脉，起于【小指次指】之端，上出【两指】之间，循【手】表【腕】，出【臂外两骨】之间，上贯【肘】，循【臑外】上【肩】，而交出【足少阳】之后，入【缺盆】，布【膻中】，散络【心包】，下【膈】，循属【三焦】；其支者，从【膻中】上出【缺盆】，上【项】，系【耳后】，直上出【耳上角】，以屈【下颊】至【䪼】；其支者，从【耳后】入【耳中】，出走【耳前】，过【客主人】前，交【颊】，至【目锐眦】。`},
+        {id:11,name:"足少阳胆经",text:`11.	胆【足少阳】之脉，起于【目锐眦】，上抵【头角】，下【耳后】，循【颈】，行【手少阳】之前，至【肩上】，却交出【手少阳】之后，入【缺盆】；其支者，从【耳后】入【耳中】，出走【耳前】，至【目锐眦】后；其支者，别【锐眦】，下【大迎】，合于【手少阳】，抵于【䪼】，下加【颊车】，下【颈】，合【缺盆】，以下【胸中】，贯【膈】，络【肝】属【胆】，循【胁里】，出【气街】，绕【毛际】，横入【髀厌】中；其直者，从【缺盆】下【腋】，循【胸】过【季胁】，下合【髀厌】中，以下循【髀阳】，出【膝外廉】，下【外辅骨】之前，直下抵【绝骨】之端，下出【外踝】之前，循【足跗】上，入【小指次指】之间；其支者，别【跗上】，入【大指】之间，循【大指歧骨内】，出其端，还贯【爪甲】，出【三毛】。`},
+        {id:12,name:"足厥阴肝经",text:`12.	肝【足厥阴】之脉，起于【大指丛毛】之际，上循【足跗上廉】，去【内踝】一寸，上【踝八寸】，交出【太阴】之后，上【腘内廉】，循【股阴】，入【毛中】，环【阴器】，抵【小腹】，挟【胃】，属【肝】络【胆】，上贯【膈】，布【胁肋】，循【喉咙】之后，上入【颃颡】，连【目系】，上出【额】，与【督脉】会于【巅】；其支者，从【目系】，下【颊里】，环【唇内】；其支者，复从【肝】别，贯【膈】，上注【肺】。`}
+    ];
+
+    // ====================== DOM缓存 ======================
+    const $dom = {
+        textBox: document.getElementById("textBox"),
+        mySelect: document.getElementById("mySelect"),
+        toggleAllBtn: document.getElementById("toggleAllBtn"),
+        modeSwitchBtn: document.getElementById("modeSwitchBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        statPanel: document.getElementById("statPanel")
+    };
+
+    // ====================== 全局状态管理 ======================
+    const state = {
+        isInputMode: false,
+        allAnswersVisible: false,
+        cacheText: new Map(),
+        debounceTimer: null,
+        lastSelectVal: ''
+    };
+
+    // ====================== 工具函数 ======================
+    const utils = {
+        debounce(fn, delay) {
+            return (...args) => {
+                clearTimeout(state.debounceTimer);
+                state.debounceTimer = setTimeout(() => fn(...args), delay);
+            }
+        },
+        getBtnHtml(text, hint) {
+            return `${text}<span class="shortcut-hint">${hint}</span>`;
+        },
+        normalizeStr(str) {
+            return String(str).replace(/\s+/g, '');
+        },
+        // 标准答案校验
+        checkAnswer(inputEl) {
+            const targetAns = inputEl.dataset.answer;
+            const userInput = inputEl.value.trim();
+            inputEl.classList.remove("correct", "wrong");
+            if (!userInput) return false;
+            const userClean = utils.normalizeStr(userInput);
+            const ansClean = utils.normalizeStr(targetAns);
+            if (userClean === ansClean) {
+                inputEl.classList.add("correct");
+                return true;
+            } else {
+                inputEl.classList.add("wrong");
+                return false;
+            }
+        },
+        updateStat() {
+            const inputs = $dom.textBox.querySelectorAll('input');
+            const total = inputs.length;
+            const correct = Array.from(inputs).filter(i => i.classList.contains('correct')).length;
+            const rate = total === 0 ? '0' : (correct / total * 100).toFixed(1);
+            $dom.statPanel.innerText = `填空总数：${total} | 已答对：${correct} | 正确率：${rate}%`;
+        },
+        saveSelect(val) {
+            localStorage.setItem(CONST.STORAGE_KEY, val);
+        },
+        getLastSelect() {
+            return localStorage.getItem(CONST.STORAGE_KEY) || 'all';
+        }
+    };
+
+    // ====================== 初始化下拉框 ======================
+    function initSelect() {
+        let optHtml = `<option value="all">All. 全部内容</option>`;
+        myData.forEach(item => {
+            optHtml += `<option value="${item.id}">${item.id}. ${item.name}</option>`;
+        });
+        $dom.mySelect.innerHTML = optHtml;
+        const lastVal = utils.getLastSelect();
+        $dom.mySelect.value = lastVal;
+        state.lastSelectVal = lastVal;
+    }
+
+    // ====================== 渲染后绑定输入框事件（核心修复） ======================
+    function bindInputItems() {
+        const inputList = $dom.textBox.querySelectorAll('input');
+        inputList.forEach(input => {
+            // 输入时清除对错标记
+            input.oninput = function() {
+                this.classList.remove("correct", "wrong");
+            }
+            // 失去焦点判分
+            input.onblur = function() {
+                utils.checkAnswer(this);
+                utils.updateStat();
+            }
+            // 回车判分+跳转下一题
+            input.onkeydown = function(e) {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                utils.checkAnswer(this);
+                utils.updateStat();
+                const allInputs = Array.from(inputList);
+                const curIdx = allInputs.indexOf(this);
+                let nextInput = null;
+                for (let i = curIdx + 1; i < allInputs.length; i++) {
+                    if (!allInputs[i].classList.contains("correct")) {
+                        nextInput = allInputs[i];
+                        break;
+                    }
+                }
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+        });
+    }
+
+    // 文本区域点击事件（点击模式显隐答案）
+    $dom.textBox.addEventListener('click', function(e) {
+        if (state.isInputMode) return;
+        const target = e.target.closest(".blank-item.click-mode");
+        if (!target) return;
+        target.classList.toggle("hidden");
+    });
+
+    // ====================== 渲染核心 ======================
+    const render = utils.debounce(function() {
+        const selectVal = $dom.mySelect.value;
+        let textToRender;
+        if(state.cacheText.has(selectVal)) {
+            textToRender = state.cacheText.get(selectVal);
+        } else {
+            if (selectVal === "all") {
+                textToRender = myData.map(item => item.text).join("\n");
+            } else {
+                const idx = Number(selectVal) - 1;
+                textToRender = myData[idx].text;
+            }
+            state.cacheText.set(selectVal, textToRender);
+            utils.saveSelect(selectVal);
+        }
+
+        const paragraphs = textToRender.split("\n").filter(p => p.trim());
+        const html = paragraphs.map(para => {
+            const pContent = para.replace(CONST.BLANK_REG, (match, ans) => {
+                const width = Math.max(CONST.MIN_BLANK_WIDTH, ans.length * CONST.INPUT_WIDTH_RATIO);
+                if (state.isInputMode) {
+                    return `<span class="blank-item input-mode" style="width:${width}em;"><input type="text" data-answer="${ans}" autocomplete="off"></span>`;
+                } else {
+                    const hideCls = state.allAnswersVisible ? "" : "hidden";
+                    return `<span class="blank-item click-mode ${hideCls}" style="width:${width}em;">${ans}</span>`;
+                }
+            });
+            return `<p>${pContent}</p>`;
+        }).join("");
+        $dom.textBox.innerHTML = html;
+        // 渲染完成后逐个绑定输入框事件
+        if (state.isInputMode) bindInputItems();
+        utils.updateStat();
+    }, CONST.DELAY_DEBOUNCE);
+
+    // 一键显示/隐藏答案
+    function toggleAllAnswers() {
+        if(state.isInputMode) return;
+        state.allAnswersVisible = !state.allAnswersVisible;
+        $dom.textBox.querySelectorAll(".blank-item.click-mode").forEach(span => {
+            span.classList.toggle("hidden", !state.allAnswersVisible);
+        });
+        const txt = state.allAnswersVisible ? "一键隐藏" : "一键显示";
+        $dom.toggleAllBtn.innerHTML = utils.getBtnHtml(txt, CONST.HOTKEYS.TOGGLE);
+    }
+
+    // 切换输入/点击模式
+    function switchMode() {
+        state.isInputMode = !state.isInputMode;
+        state.allAnswersVisible = false;
+        const btnTxt = state.isInputMode ? "切换点击" : "切换输入";
+        $dom.modeSwitchBtn.innerHTML = utils.getBtnHtml(btnTxt, CONST.HOTKEYS.MODE);
+        $dom.toggleAllBtn.innerHTML = utils.getBtnHtml("一键显示", CONST.HOTKEYS.TOGGLE);
+        $dom.toggleAllBtn.style.display = state.isInputMode ? "none" : "inline-block";
+        render();
+    }
+
+    // 全局重置
+    function resetAll() {
+        state.allAnswersVisible = false;
+        $dom.toggleAllBtn.innerHTML = utils.getBtnHtml("一键显示", CONST.HOTKEYS.TOGGLE);
+        render();
+    }
+
+    // ====================== 全局快捷键 ======================
+    function bindHotkey() {
+        document.addEventListener("keydown", (e) => {
+            const tag = document.activeElement.tagName;
+            if(["INPUT", "SELECT", "TEXTAREA"].includes(tag)) return;
+            const key = e.key.toUpperCase();
+            if(key === CONST.HOTKEYS.MODE) switchMode();
+            else if(key === CONST.HOTKEYS.RESET) resetAll();
+            else if(e.code === CONST.HOTKEYS.TOGGLE) {
+                e.preventDefault();
+                toggleAllAnswers();
+            }
+        });
+    }
+
+    // ====================== 绑定按钮事件 ======================
+    function bindButtons() {
+        $dom.mySelect.addEventListener("change", () => {
+            const val = $dom.mySelect.value;
+            if(val !== state.lastSelectVal) {
+                state.lastSelectVal = val;
+                resetAll();
+            }
+        });
+        $dom.toggleAllBtn.addEventListener("click", toggleAllAnswers);
+        $dom.modeSwitchBtn.addEventListener("click", switchMode);
+        $dom.resetBtn.addEventListener("click", resetAll);
+    }
+
+    // ====================== 程序入口 ======================
+    function init() {
+        initSelect();
+        bindButtons();
+        bindHotkey();
+        render();
+    }
+    init();
+})();
+</script>
+</body>
+</html>
