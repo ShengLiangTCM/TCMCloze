@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>完形填空 · TTS朗读</title>
+    <style>
+        /* ========== 基础样式 ========== */
+        :root {
+            --primary: #2563eb;
+            --primary-light: rgba(37, 99, 235, 0.1);
+            --purple: #8b5cf6;
+            --gray: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-base: #444;
+            --text-light: #333;
+            --border-gray: #cbd5e1;
+            --bg-page: #f4f7fb;
+            --bg-card: #fff;
+            --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --shadow-btn: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", system-ui, sans-serif;
+            touch-action: manipulation;
+        }
+        body {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px calc(100px + env(safe-area-inset-bottom));
+            background-color: var(--bg-page);
+            color: var(--text-base);
+        }
+        .title {
+            text-align: center;
+            font-size: 22px;
+            margin: 20px 0 15px;
+            color: var(--text-light);
+        }
+        .tip-warn {
+            background: #fff3f3;
+            color: #d32f2f;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .tip-info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .empty-tip {
+            text-align: center;
+            color: var(--gray);
+            padding: 40px 20px;
+            font-size: 15px;
+        }
+        .select-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #chapterSelect {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-gray);
+            background: var(--bg-card);
+            outline: none;
+            cursor: pointer;
+        }
+        #chapterSelect:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        .btn-preset,
+        .btn-import {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: var(--shadow-btn);
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .btn-preset-primary {
+            background: var(--primary);
+        }
+        .btn-preset-primary:hover {
+            background: #1d4ed8;
+        }
+        .btn-preset-purple {
+            background: var(--purple);
+        }
+        .btn-preset-purple:hover {
+            background: #7c3aed;
+        }
+        .btn-import {
+            background: var(--success);
+        }
+        .btn-import:hover {
+            background: #059669;
+        }
+        #fileInput {
+            display: none;
+        }
+        button:disabled {
+            background: #cbd5e1 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            opacity: 0.7;
+        }
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            background: #fff;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--text-light);
+        }
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-base);
+        }
+        .modal-body code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .modal-body pre {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .modal-close {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .stat-panel {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--gray);
+            display: none;
+        }
+        .tts-panel {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 15px;
+        }
+        .slider-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .slider-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .slider-item label {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        .slider-item input[type="range"] {
+            width: 100%;
+        }
+        .slider-value {
+            font-size: 12px;
+            color: var(--gray);
+            text-align: right;
+        }
+        .voice-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .voice-group label {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        #voiceSelect {
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-gray);
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+        }
+        #voiceSelect:focus {
+            border-color: var(--primary);
+        }
+        .tts-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tts-btns button {
+            flex: 1;
+            min-width: 70px;
+            padding: 9px 0;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: var(--shadow-btn);
+            transition: background 0.2s;
+        }
+        .btn-play {
+            background: var(--primary);
+        }
+        .btn-play:hover {
+            background: #1d4ed8;
+        }
+        .btn-pause {
+            background: var(--warning);
+        }
+        .btn-pause:hover {
+            background: #d97706;
+        }
+        .btn-stop {
+            background: var(--danger);
+        }
+        .btn-stop:hover {
+            background: #dc2626;
+        }
+        .article {
+            font-size: 18px;
+            line-height: 2.2;
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            min-height: 200px;
+        }
+        .article p {
+            margin-bottom: 0.5em;
+            text-indent: 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .article p .play-btn {
+            flex-shrink: 0;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            line-height: 1.8;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: background 0.2s;
+            white-space: nowrap;
+            margin-top: 2px;
+        }
+        .article p .play-btn:active {
+            background: #1d4ed8;
+            transform: scale(0.95);
+        }
+        .article p .text-content {
+            flex: 1;
+        }
+        .blank-item {
+            display: inline-block;
+            min-width: 2em;
+            text-align: center;
+            margin: 0 2px;
+            transition: all 0.1s ease;
+            position: relative;
+            vertical-align: bottom;
+            height: 2.2em;
+            line-height: 2em;
+        }
+        .blank-item.click-mode {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            cursor: pointer;
+        }
+        .blank-item.click-mode:hover {
+            background-color: var(--primary-light);
+        }
+        .blank-item.click-mode.hidden {
+            color: transparent;
+        }
+        .blank-item.input-mode input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-bottom: 2px solid var(--border-gray);
+            background: transparent;
+            font-size: inherit;
+            line-height: 2.2;
+            text-align: center;
+            outline: none;
+            padding: 0 4px;
+            font-family: inherit;
+        }
+        input.correct {
+            border-bottom-color: var(--success) !important;
+            color: var(--success) !important;
+            background: rgba(16, 185, 129, 0.05) !important;
+        }
+        input.wrong {
+            border-bottom-color: var(--danger) !important;
+            color: var(--danger) !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+        }
+
+        /* ========== 底部控制栏（两行） ========== */
+        .controls {
+            position: fixed;
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 999;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            min-width: 300px;
+        }
+        .controls-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        .controls-row button {
+            padding: 9px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: var(--shadow-btn);
+            transition: background 0.2s;
+            white-space: nowrap;
+            color: #fff;
+            flex: 1 1 0;
+            min-width: 0;
+            text-align: center;
+        }
+        .controls-row .btn-play {
+            background: var(--primary);
+        }
+        .controls-row .btn-play:hover {
+            background: #1d4ed8;
+        }
+        .controls-row .btn-pause {
+            background: var(--warning);
+        }
+        .controls-row .btn-pause:hover {
+            background: #d97706;
+        }
+        .controls-row .btn-stop {
+            background: var(--danger);
+        }
+        .controls-row .btn-stop:hover {
+            background: #dc2626;
+        }
+        .controls-row .btn-primary {
+            background: var(--primary);
+        }
+        .controls-row .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .controls-row .btn-purple {
+            background: var(--purple);
+        }
+        .controls-row .btn-purple:hover {
+            background: #7c3aed;
+        }
+        .controls-row .btn-gray {
+            background: var(--gray);
+        }
+        .controls-row .btn-gray:hover {
+            background: #475569;
+        }
+        .controls-row button:disabled {
+            background: #cbd5e1 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            opacity: 0.7;
+        }
+        .shortcut-hint {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-left: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+        .current-progress {
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 500;
+            text-align: center;
+            margin: 6px 0 0;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 600px) {
+            body {
+                padding: 0 12px calc(110px + env(safe-area-inset-bottom));
+            }
+            .title {
+                font-size: 19px;
+            }
+            .article {
+                padding: 15px;
+                font-size: 16px;
+            }
+            .article p {
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+            .article p .play-btn {
+                font-size: 12px;
+                padding: 0 10px;
+            }
+            .slider-group {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .controls {
+                gap: 4px;
+                padding: 6px 8px;
+                min-width: unset;
+                width: calc(100% - 16px);
+                border-radius: 10px;
+            }
+            .controls-row {
+                gap: 4px;
+            }
+            .controls-row button {
+                padding: 9px 4px;
+                font-size: 12px;
+                flex: 1 1 0;
+                min-width: 0;
+            }
+            .shortcut-hint {
+                display: none;
+            }
+            .tts-btns button {
+                min-width: 60px;
+                padding: 10px 0;
+            }
+            .select-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-preset,
+            .btn-import {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .controls-row button {
+                font-size: 10px;
+                padding: 7px 2px;
+            }
+            .controls {
+                padding: 4px 6px;
+                gap: 3px;
+            }
+            .controls-row {
+                gap: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2 class="title">完形填空 · 语音朗读</h2>
+    <div class="tip-warn" id="wechatTip">提示：微信内置浏览器不支持语音朗读，请点击右上角【在浏览器打开】，使用系统自带浏览器使用。</div>
+    <div class="tip-info" id="ttsTip"></div>
+    <div class="select-bar">
+        <button class="btn-preset btn-preset-primary" id="loadJingluoBtn">载入经络文本</button>
+        <button class="btn-preset btn-preset-purple" id="loadShanghanBtn">载入伤寒论文本</button>
+        <button class="btn-import" id="importBtn">导入本地文件<span class="shortcut-hint">L</span></button>
+        <button class="btn-preset btn-preset-purple" id="formatHelpBtn">格式说明</button>
+        <input type="file" id="fileInput" accept=".txt,.json">
+    </div>
+    <div class="select-bar"><select id="chapterSelect"></select></div>
+    <div class="stat-panel" id="statPanel"></div>
+    <div class="tts-panel" id="ttsPanel">
+        <div class="voice-group">
+            <label>语音音色</label>
+            <select id="voiceSelect"><option value="">加载中...</option></select>
+        </div>
+        <div class="slider-group">
+            <div class="slider-item"><label>语速 <span class="slider-value" id="rateVal">1.0</span></label><input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></div>
+            <div class="slider-item"><label>音调 <span class="slider-value" id="pitchVal">1.0</span></label><input type="range" id="pitch" min="0" max="2" step="0.1" value="1"></div>
+            <div class="slider-item"><label>音量 <span class="slider-value" id="volumeVal">1.0</span></label><input type="range" id="volume" min="0" max="1" step="0.1" value="1"></div>
+        </div>
+        <div class="current-progress" id="currentProgress">未播放</div>
+    </div>
+    <div class="article" id="textBox"><div class="empty-tip">请点击上方按钮载入预设文本，或导入本地文件</div></div>
+
+    <!-- ===== 底部控制栏：两行 ===== -->
+    <div class="controls">
+        <!-- 第一行：TTS 相关 -->
+        <div class="controls-row">
+            <button class="btn-play" id="playBtn" disabled>朗读<span class="shortcut-hint">R</span></button>
+            <button class="btn-pause" id="pauseBtn" disabled>暂停<span class="shortcut-hint">P</span></button>
+            <button class="btn-stop" id="stopBtn" disabled>停止<span class="shortcut-hint">S</span></button>
+        </div>
+        <!-- 第二行：其他功能 -->
+        <div class="controls-row">
+            <button id="toggleAllBtn" class="btn-primary" disabled>一键显示<span class="shortcut-hint">空格</span></button>
+            <button id="modeSwitchBtn" class="btn-purple" disabled>切换输入<span class="shortcut-hint">M</span></button>
+            <button id="resetBtn" class="btn-gray" disabled>清空重置<span class="shortcut-hint">C</span></button>
+        </div>
+    </div>
+
+    <!-- 格式说明弹窗 -->
+    <div class="modal-mask" id="formatModal">
+        <div class="modal-card">
+            <div class="modal-title">载入文件格式说明</div>
+            <div class="modal-body">
+                <p><strong>1. TXT文件</strong></p>
+                <p><strong>1.1 篇章分隔</strong></p>
+                <p>每篇独立内容之间，用 <code>=====</code> （5个半角等号）单独占一行进行分隔。</p>
+                <p><strong>1.2 单篇结构</strong></p>
+                <p>每篇的第一行为标题（可含编号，如 <code>1. 手太阴肺经</code> ）。<br>后续所有行均为正文内容。</p>
+                <p><strong>1.3 挖空语法</strong></p>
+                <p>需要做成填空的内容，用 <code>【答案文本】</code> 包裹，例如：<br><code>太阳之为病，脉【浮】，头项【强痛】而恶寒。</code></p>
+                <p><strong>1.4 发音修正（可选）</strong></p>
+                <p>生僻字或多音字需要指定朗读发音时，用 <code>{原字|读音字}</code> 标记，例如：<br><code>{恶|误}寒</code> → 朗读时会按"误寒"发音。</p>
+                <p><br></p>
+                <p><strong>2. JSON文件</strong></p>
+                <p><strong>2.1 JSON 需为数组</strong></p>
+                <p>每项含 <code>name</code> 和 <code>text</code> 字段。<br> <code>name</code> 字段即标题。<br> <code>text</code> 字段即正文，使用\n换行。</p>
+                <p><strong>2.2 其他格式</strong></p>
+                <p><code>挖空语法</code> 与 <code>发音修正</code> 与 <code>TXT</code> 文件格式相同。</p>
+                <p><br></p>
+                <p><strong>示例（TXT）：</strong></p>
+                <pre>=====
+手太阴肺经
+1. 肺【手太阴】之脉，起于【中焦】，下络【大肠】，{还|环}循【胃口】。
+=====
+手阳明大肠经
+2. 大肠【手阳明】之脉，起于【大指次指】之端，循【指上廉】，出【合谷两骨之间】。</pre>
+                <p><strong>示例（JSON）：</strong></p>
+                <pre>[
+  {"name":"手太阴肺经","text":"肺【手太阴】之脉，起于【中焦】..."},
+  {"name":"足太阴脾经","text":"脾【足太阴】之脉...注【心中】。\n脾之大络，名曰【大包】..."},
+]</pre>
+                <p style="color: var(--gray); font-size: 13px;">注：保存为 UTF-8 编码的 .txt 或 .json 文件即可导入。</p>
+            </div>
+            <button class="modal-close" id="closeModalBtn">我知道了</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ====================== 配置常量 ======================
+            const CONST = {
+                BLANK_REG: /【(.+?)】/g,
+                PRONOUNCE_REG: /\{(.+?)\|(.+?)\}/g,
+                STORAGE_KEY: 'last_chapter_select',
+                VOICE_KEY: 'last_tts_voice',
+                INPUT_WIDTH_RATIO: 1.3,
+                MIN_BLANK_WIDTH: 2,
+                DEBOUNCE_DELAY: 100,
+                SPLIT_MARK: '=====',
+                ALL_OPTION_VALUE: 'all',
+                SENTENCE_SPLIT_REG: /([。；！？\n])/g,
+                HOTKEYS: { MODE: 'M', RESET: 'C', TOGGLE: 'Space', TTS_PLAY: 'R', TTS_PAUSE: 'P', TTS_STOP: 'S',
+                    IMPORT: 'L' }
+            };
+            // ====================== 发音修正映射表 ======================
+            const PRONUNCIATION_FIX = {
+                '臑': '闹', '髃': '鱼', '髆': '博', '腨': '涮', '䪼': '拙', '颃颡': '杭嗓', '髀': '毕',
+                '跗': '夫', '膂': '旅', '腘': '国', '踝': '怀', '肱': '工', '膈': '格', '眦': '字',
+                '承浆': '成浆', '廉': '连'
+            };
+            // ====================== 预设文本数据 ======================
+            const PRESET_JINGLUO =
+                `=====
+        手太阴肺经
+        1. 肺【手太阴】之脉，起于【中焦】，下络【大肠】，{还|环}循【胃口】，上【膈】，属【肺】，从【肺系】，横出【腋下】，下循【臑内】，行【{少|邵}阴】、【心主】之前，下【肘中】，循【臂内上骨下廉】，入【寸口】，上【鱼】，循【鱼际】，出【大指】之端；其支者，从【腕后】，直出【次指内廉】，出其端。
+        =====
+        手阳明大肠经
+        2. 大肠【手阳明】之脉，起于【大指次指】之端，循【指上廉】，出【合谷两骨之间】，上入【两筋之中】，循【臂{上|尚}廉】，入【肘外廉】，上【臑外前廉】，上【肩】，出【髃骨】之【前廉】，上出于【柱骨】之会上，下入【缺盆】，络【肺】，下【膈】，属【大肠】；其支者，从【缺盆】，上【颈】，贯【颊】，入【下齿】中，{还|环}出夹口，交【人中】，左之右，右之左，上夹【鼻孔】。
+        =====
+        足阳明胃经
+        3. 胃【足阳明】之脉，起于【鼻交頞中】，旁纳【太阳】之脉，下循【鼻外】，入【上齿】中，{还|环}出夹口环唇，下交【承浆】，却循【颐后下廉】，出【大迎】，循【颊车】，上【耳前】，过【客主人】，循【{发|髮}际】，至【额颅】；其支者，从【大迎】前，下【人迎】，循【喉咙】，入【缺盆】，下【膈】，属【胃】络【脾】；其直者，从【缺盆】，下【乳内廉】，下夹【脐】，入【气街】中；其支者，起于【胃口】，下循【腹里】，下至【气街】中而合，以下【髀关】，抵【伏兔】，下【膝膑】中，下循【胫外廉】，下【足跗】，入【中指内间】；其支者，下【膝三寸】而别，下入【中指外间】；其支者，别【跗上】，入【大指】间，出其端。
+        =====
+        足太阴脾经
+        4. 脾【足太阴】之脉，起于【大指】之端，循【指内侧白肉际】，过【核骨】后，上【内踝前廉】，上【腨内】，循【胫骨】后，交出【厥阴】之前，上【膝股内前廉】，入【腹】，属【脾】络【胃】，上【膈】，夹【{咽|烟}】，连【舌本】，散【舌下】；其支者，复从【胃】别，上【膈】，注【心中】。
+        脾之大络，名曰【大包】，出【渊腋】下【三寸】，布【胸胁】。
+        =====
+        手少阴心经
+        5. 心【手{少|邵}阴】之脉，起于【心中】，出属【心系】，下【膈】，络【小肠】；其支者，从【心系】，上夹【{咽|烟}】，系【目系】；其直者，复从【心系】，却上【肺】，下出【腋下】，下循【臑内后廉】，行【太阴】、【心主】之后，下【肘内】，循【臂内后廉】，抵【掌后锐骨】之端，入【掌内后廉】，循【小指】之内，出其端。
+        =====
+        手太阳小肠经
+        6. 小肠【手太阳】之脉，起于【小指】之端，循【手外侧】上【腕】，出【踝中】，直上循【臂骨下廉】，出【肘内侧两骨】之间，上循【臑外后廉】，出【肩解】，绕【肩胛】，交【肩上】，入【缺盆】，络【心】，循【{咽|烟}】，下【膈】，抵【胃】，属【小肠】；其支者，从【缺盆】，循【颈】，上【颊】，至【目锐眦】，却入【耳中】；其支者，别【颊】上【䪼】抵【鼻】，至【目内眦】，斜络于【颧】。
+        =====
+        足太阳膀胱经
+        7. 膀胱【足太阳】之脉，起于【目内眦】，上【额】交【巅】；其支者，从【巅】至【耳上角】；其直者，从【巅】入络【脑】，{还|环}出别下【项】，循【肩髆】内，夹【脊】抵【腰中】，入循【膂】，络【肾】属【膀胱】；其支者，从【腰中】下夹【脊】，贯【臀】入【腘中】；其支者，从【髆内左右】别，下贯【胛】，夹【脊】内，过【髀枢】，循【髀外】，从【后廉】下合【腘中】，以下贯【腨内】，出【外踝】之后，循【京骨】，至【小指】外侧。
+        =====
+        足少阴肾经
+        8. 肾【足{少|邵}阴】之脉，起于【小指】之下，邪走【足心】，出于【然骨】之下，循【内踝】之后，别入【跟中】，以上【腨内】，出【腘内廉】，上【股内后廉】，贯【脊】，属【肾】络【膀胱】；其直者，从【肾】上贯【肝膈】，入【肺】中，循【喉咙】，夹【舌本】；其支者，从【肺】出，络【心】，注【胸中】。
+        =====
+        手厥阴心包经
+        9. 心主【手厥阴心包络】之脉，起于【胸中】，出属【心包络】，下【膈】，历络【三焦】；其支者，循【胸】出【胁】，下【腋三寸】，上抵【腋下】，循【臑内】，行【太阴】、【{少|邵}阴】之间，入【肘中】，下【臂】，行【两筋】之间，入【掌中】，循【中指】，出其端；其支者，别【掌中】，循【小指次指】，出其端。
+        =====
+        手少阳三焦经
+        10. 三焦【手{少|邵}阳】之脉，起于【小指次指】之端，上出【两指】之间，循【手】表【腕】，出【臂外两骨】之间，上贯【肘】，循【臑外】上【肩】，而交出【足{少|邵}阳】之【后】，入【缺盆】，布【{膻|但}中】，散络【心包】，下【膈】，循属【三焦】；其支者，从【{膻|但}中】，上出【缺盆】，上【项】，系【耳后】，直上出【耳上角】，以屈【下颊】至【䪼】；其支者，从【耳后】，入【耳中】，出走【耳前】，过【客主人】前，交【颊】，至【目锐眦】。
+        =====
+        足少阳胆经
+        11. 胆【足{少|邵}阳】之脉，起于【目锐眦】，上抵【头角】，下【耳后】，循【颈】，行【手{少|邵}阳】之【前】，至【肩上】，却交出【手{少|邵}阳】之【后】，入【缺盆】；其支者，从【耳后】，入【耳中】，出走【耳前】，至【目锐眦】后；其支者，别【锐眦】，下【大迎】，合于【手{少|邵}阳】，抵于【䪼】，下加【颊车】，下【颈】，合【缺盆】，以下【胸中】，贯【膈】，络【肝】属【胆】，循【胁里】，出【气街】，绕【毛际】，横入【髀厌】中；其直者，从【缺盆】，下【腋】，循【胸】过【季胁】，下合【髀厌】中，以下循【髀阳】，出【膝外廉】，下【外辅骨】之前，直下抵【绝骨】之端，下出【外踝】之前，循【足跗上】，入【小指次指】之间；其支者，别【跗上】，入【大指】之间，循【大指歧骨内】，出其端，{还|环}贯【爪甲】，出【三毛】。
+        =====
+        足厥阴肝经
+        12. 肝【足厥阴】之脉，起于【大指丛毛】之际，上循【足跗上廉】，去【内踝】一寸，上【踝八寸】，交出【太阴】之后，上【腘内廉】，循【股阴】，入【毛中】，环【阴器】，抵【小腹】，夹【胃】，属【肝】络【胆】，上贯【膈】，布【胁肋】，循【喉咙】之后，上入【颃颡】，连【目系】，上出【额】，与【督脉】会于【巅】；其支者，从【目系】，下【颊里】，环【唇内】；其支者，复从【肝】别，贯【膈】，上注【肺】。`;
+
+            const PRESET_SHANGHAN =
+                `=====
+        辨太阳病脉证并治上（1-30）
+        1.	太阳之为病，脉【浮】，头项【强痛】而【{恶|误}寒】。
+        2.	太阳病，发【热】，【汗】出，{恶|误}【风】，脉【缓】者，名为中风。
+        3.	太阳病，或已【发热】，或未【发热】，必【{恶|误}寒】，【体痛】，【呕逆】，脉阴阳俱【紧】者，名曰伤寒。
+        4.	伤寒一日，【太阳】受之，脉若【静】者，为不传。颇欲【吐】，若【躁烦】，脉【{数|硕}急】者，为传也。
+        5.	伤寒，二三日，【阳明】、【{少|绍}阳】证【不见】者，为不传也。
+        6.	太阳病，【发热】而【渴】，不【{恶|误}寒】者，为温病。
+        若【发汗】已，身【灼热】者，名曰风温。风温为病，脉阴阳俱【浮】，【自汗】出，身【重】，多【眠睡】，鼻息必【鼾】，【语言】难出。
+        若被下者，小便【不利】，直视，失【溲】。
+        若被火者，微【发黄色】，剧则如【惊痫】，时【{瘛|赤}{疭|纵}】，若火【熏】之。一逆尚引日，再逆促命期。
+        7.	病有【发热】{恶|误}寒者，发于阳也；【无热】{恶|误}寒者，发于阴也。发于阳者，七日愈。发于阴者，六日愈。以阳数七，阴数六，故也。
+        8.	太阳病，头痛，至七日以上，【自愈】者，以行其经【尽】故也。若欲作【再经】者，针【足阳明】，使经【不传】则愈。
+        9.	太阳病，欲解时，从【巳】至【未】上。
+        10.	风家，表【解】而【不{了|鄝}{了|鄝}】者，十二日愈。
+        11.	病人身【大热】，反欲【得衣】者，热在皮肤，寒在骨髓也；身【大寒】，反不欲【近衣】者，寒在皮肤，热在骨髓也。
+        12.	太阳中风，阳浮而阴弱，阳浮者，【热自发】，阴弱者，【汗自出】。啬啬【{恶|误}寒】，淅淅【{恶|误}风】，翕翕【发热】，【鼻鸣干呕】者，桂枝汤主之。
+        13.	太阳病，头【痛】，发【热】，【汗】出，{恶|误}【风】，桂枝汤主之。
+        14.	太阳病，项背【强{几|机}{几|机}】，反【汗出】{恶|误}【风】者，桂枝加【葛根】汤主之。
+        15.	太阳病，下之后，其【气上冲】者，可与桂枝汤。方用前法。若【不上冲】者，不得与之。
+        16.	太阳病，三日，已【发汗】，若【吐】，若【下】，若【温针】，仍【不解】者，此为坏病，桂枝【不中】与之也。观其【脉证】，知犯【何逆】，【随证】治之。
+        桂枝本为【解肌】，若其人脉【浮紧】，发热汗【不出】者，【不可】与之也。常须识此，勿令误也。
+        17.	若酒客病，【不可】与桂枝汤，得之则【呕】，以酒客不喜【甘】故也。
+        18.	喘家，作桂枝汤，加【厚朴】、【杏子】佳。
+        19.	凡服桂枝汤吐者，其后必【吐脓血】也。
+        20.	太阳病，【发汗】，遂【漏】不止，其人【{恶|误}风】，【小便】难，四肢【微急】，难以【屈伸】者，桂枝加【附子】汤主之。
+        21.	太阳病，下之后，脉【促】胸【满】者，桂枝【去芍药】汤主之。
+        22.	若【微寒】者，桂枝去芍药加【附子】汤主之。
+        23.	太阳病，得之八九日，如【疟】状，发热{恶|误}寒，热【多】寒【少】，其人【不呕】，清便【欲自可】，一日【二三】度发。脉【微缓】者，为欲愈也。
+        脉【微】而【{恶|误}寒】者，此阴阳俱【虚】，不可更【发汗】、更【下】、更【吐】也。
+        面色反有【热色】者，未欲解也。以其不能得【小汗】出，身必【痒】，宜桂枝麻黄各半汤。
+        24.	太阳病，初服桂枝汤，反【烦】不解者，先刺【风池】、【风府】，却与桂枝汤则愈。
+        25.	服桂枝汤，【大汗】出，脉【洪大】者，与桂枝汤，如前法。若形似【疟】，一日【再】发者，【汗出】必解，宜桂枝二麻黄一汤。
+        26.	服桂枝汤，【大汗】出后，【大烦渴】不解，脉【洪大】者，白虎加人参汤主之。
+        27.	太阳病，发热{恶|误}寒，热【多】寒【少】。脉【微弱】者，此无【阳】也，【不可】发汗，宜桂枝二越婢一汤。
+        28.	服桂枝汤，或下之，仍【头项强痛】，翕翕【发热】，【无汗】，心下【满】，微【痛】，小便【不利】者，桂枝去桂加【茯苓白术】汤主之。
+        29.	伤寒脉【浮】，【自汗出】，小便【{数|硕}】，心【烦】，微【{恶|误}寒】，脚【挛急】，反与桂枝，欲攻其【表】，此误也。
+        得之便【厥】，{咽|烟}中【{干|肝}】，【烦躁】，【吐逆】者，作甘草{干|肝}姜汤与之，以【复其阳】。
+        若【厥】愈足【温】者，更作芍药甘草汤与之，其脚即【伸】。
+        若胃气不和【谵语】者，少与{调|条}胃承气汤。
+        若【重发汗】，复加【烧针】者，四逆汤主之。
+        30.	问曰：证象【阳旦】，按法治之而【增剧】，【厥逆】，{咽|烟}中【{干|肝}】，两胫【拘急】而【谵语】。师曰：言夜半手足当【温】，两脚当【伸】，后如师言。何以知此？
+        答曰：寸口脉浮而大，浮为【风】，大为【虚】，【风】则【生微热】，【虚】则【两胫挛】，病形象桂枝，因加附子参其间，增桂令汗出，附子温经，亡阳故也。
+        【厥逆】，{咽|烟}中【{干|肝}】，【烦躁】，【阳明】内结，【谵语】烦乱，更饮甘草{干|肝}姜汤，夜半【阳气】还，两足当【热】。
+        胫尚微【拘急】，重与芍药甘草汤，尔乃【胫伸】。以承气汤【微溏】，则止其【谵语】，故知病可愈。
+        =====
+        辨太阳病脉证并治中（31-127）
+        31.	太阳病，项背【强几几】，【无汗】{恶|误}【风】，葛根汤主之。
+        32.	太阳与阳明【合病】者，必自【下利】，葛根汤主之。
+        33.	太阳与阳明合病，不【下利】但【呕】者，葛根加【半夏】汤主之。
+        34.	太阳病，桂枝证，医反下之，利遂【不止】，脉【促】者，【表】未【解】也，【喘】而【汗出】者，葛根黄芩黄连汤主之。
+        35.	太阳病，【头痛发热】，【身疼腰痛】，【骨节疼痛】，【{恶|误}风无汗】而【喘】者，麻黄汤主之。
+        36.	太阳与阳明合病，【喘】而【胸满】者，不可【下】，宜麻黄汤。
+        37.	太阳病，十日已去，脉【浮细】而【嗜卧】者，【外】已解也。设【胸满胁痛】者，与小柴胡汤。脉但【浮】者，与麻黄汤。
+        38.	太阳中风，脉【浮紧】，发热{恶|误}寒，身【疼痛】，【不汗出】而【烦躁】者，大青龙汤主之。若脉【微弱】，【汗出】{恶|误}【风】者，不可服之。服之则【厥逆】，【筋惕肉瞤】，此为逆也。大青龙汤主之。
+        39.	伤寒脉【浮缓】，身【不疼】，但【重】，乍有【轻】时，无【{少|绍}阴】证者，大青龙汤发之。
+        40.	伤寒【表】不解，心下有【水气】，【干呕发热】而【咳】，或【渴】，或【利】，或【噎】，或【小便不利】，【少腹满】，或【喘】者，小青龙汤主之。
+        41.	伤寒心下有【水气】，【咳】而微【喘】，发热【不渴】。服汤已【渴】者，此【寒】去欲解也。小青龙汤主之。
+        42.	太阳病，【外】证未解，脉【浮弱】者，当以【汗】解，宜桂枝汤。
+        43.	太阳病，下之微【喘】者，【表】未解故也，桂枝加【厚朴杏子】汤主之。
+        44.	太阳病，【外】证未解，不可【下】也，【下】之为逆，欲解【外】者，宜桂枝汤。
+        45.	太阳病，先【发汗】不解，而复【下】之，脉【浮】者不愈。【浮】为在外，而反【下】之，故令不愈。今脉【浮】，故在【外】，当须解【外】则愈，宜桂枝汤。
+        46.	太阳病，脉【浮紧】，【无汗】，【发热】，【身疼痛】，八九日不解，【表】证仍在，此当【发其汗】。服药已微除，其人【发烦目瞑】，剧者必【衄】，【衄】乃解。所以然者，【阳气】重故也。麻黄汤主之。
+        47.	太阳病，脉【浮紧】，【发热】，身无【汗】，【自衄】者，愈。
+        48.	二阳【并】病，太阳初得病时，发其汗，汗【先出不彻】，因转属【阳明】，续自【微汗出】，不【{恶|误}寒】。若太阳病证【不罢】者，不可【下】，【下】之为逆，如此可【小发汗】。
+        设面色缘缘正赤者，阳气【怫郁在表】，当【解】之【熏】之。
+        若发汗不彻，不足言，阳气怫郁不得越，当【汗】不【汗】，其人【躁烦】，不知痛处，乍在【腹中】，乍在【四肢】，按之不可得，其人【短气】，但【坐】，以汗出不彻故也，更发汗则愈。何以知汗出不彻？以脉【涩】故知也。
+        49.	脉【浮{数|硕}】者，法当【汗出】而愈。若【下】之，【身重心悸】者，不可【发汗】，当【自汗出】乃解。所以然者，尺中脉【微】，此【里虚】，须【表里实】，津液【自和】，便【自汗出】愈。
+        50.	脉【浮紧】者，法当【身疼痛】，宜以【汗】解之。假令尺中【迟】者，不可【发汗】。何以知然？以【荣气】不足，血少故也。
+        51.	脉【浮】者，病在【表】，可【发汗】，宜麻黄汤。
+        52.	脉【浮】而【{数|硕}】者，可【发汗】，宜麻黄汤。
+        53.	病常【自汗出】者，此为【荣气】和。【荣气】和者，外不谐，以【卫气】不共【荣气】谐和故尔。以荣行【脉中】，卫行【脉外】。复【发其汗】，【荣卫】和则愈。宜桂枝汤。
+        54.	病人脏无他病，时【发热】，自【汗出】，而不愈者，此【卫气】不和也。先其时【发汗】则愈，宜桂枝汤。
+        55.	伤寒脉【浮紧】，不【发汗】，因致【衄】者，麻黄汤主之。
+        56.	伤寒不【大便】六七日，头痛【有热】者，与承气汤。其小便【清】者，知不在【里】，仍在【表】也，当须【发汗】。若头痛者，必衄，宜桂枝汤。
+        57.	伤寒发汗【已解】，半日许【复烦】，脉【浮{数|硕}】者，可【更发汗】，宜桂枝汤。
+        58.	凡病，若【发汗】，若【吐】，若【下】，若亡【血】、亡【津液】，阴阳【自和】者，必自愈。
+        59.	大下之后，复【发汗】，小便【不利】者，亡【津液】故也。【勿】治之，得小便【利】，必自愈。
+        60.	下之后，复【发汗】，必【振寒】，脉【微细】。所以然者，以内外【俱虚】故也。
+        61.	下之后，复【发汗】，昼日【烦躁】不得【眠】，【夜】而【安静】，不【呕】，不【渴】，无【表】证，脉【沉微】，身无【大热】者，干姜附子汤主之。
+        62.	发汗后，身【疼痛】，脉【沉迟】者，桂枝加芍药生姜各一两人参三两新加汤主之。
+        63.	发汗后，不可更行桂枝汤，【汗出】而【喘】，无【大热】者，可与麻黄杏仁甘草石膏汤。
+        64.	发汗过多，其人叉手自冒心，心下悸，欲得按者，桂枝甘草汤主之。
+        65.	发汗后，其人脐下悸者，欲作奔豚，茯苓桂枝甘草大枣汤主之。
+        66.	发汗后，腹胀满者，厚朴生姜半夏甘草人参汤主之。
+        67.	伤寒若吐、若下后，心下逆满，气上冲胸，起则头眩，脉沉紧，发汗则动经，身为振振摇者，茯苓桂枝白术甘草汤主之。
+        68.	发汗，病不解，反{恶|误}寒者，虚故也，芍药甘草附子汤主之。
+        69.	发汗，若下之，病仍不解，烦躁者，茯苓四逆汤主之。
+        70.	发汗后，{恶|误}寒者，虚故也。不{恶|误}寒，但热者，实也。当和胃气，与调胃承气汤。
+        71.	太阳病，发汗后，大汗出，胃中干，烦躁不得眠，欲得饮水者，少少与饮之，令胃气和则愈。若脉浮，小便不利，微热消渴者，五苓散主之。
+        72.	发汗已，脉浮{数|硕}烦渴者，五苓散主之。
+        73.	伤寒，汗出而渴者，五苓散主之；不渴者，茯苓甘草汤主之。
+        74.	中风发热，六七日不解而烦，有表里证，渴欲饮水，水入则吐者，名曰水逆，五苓散主之。
+        75.	未持脉时，病人手叉自冒心，师因教试令咳而不咳者，此必两耳聋无闻也。所以然者，以重发汗，虚故如此。
+        发汗后，饮水多必喘，以水灌之亦喘。
+        76.	发汗后，水药不得入口为逆，若更发汗，必吐下不止。
+        发汗吐下后，虚烦不得眠，若剧者，必反复颠倒，心中懊，栀子豉汤主之；若少气者，栀子甘草豉汤主之；若呕者，栀子生姜豉汤主之。
+        77.	发汗，若下之，而烦热，胸中窒者，栀子豉汤主之。
+        78.	伤寒五六日，大下之后，身热不去，心中结痛者，未欲解也，栀子豉汤主之。
+        79.	伤寒下后，心烦腹满，卧起不安者，栀子厚朴汤主之。
+        80.	伤寒，医以丸药大下之，身热不去，微烦者，栀子干姜汤主之。
+        81.	凡用栀子汤，病人旧微溏者，不可与服之。
+        82.	太阳病发汗，汗出不解，其人仍发热，心下悸，头眩，身动，振振欲擗地者，真武汤主之。
+        83.	{咽|烟}喉干燥者，不可发汗。
+        84.	淋家，不可发汗，汗出必便血。
+        85.	疮家，虽身疼痛，不可发汗，汗出则痉。
+        86.	衄家，不可发汗，汗出必额上陷，脉急紧，直视不能眴，不得眠。
+        87.	亡血家，不可发汗，发汗则寒栗而振。
+        88.	汗家重发汗，必恍惚心乱，小便已，阴疼，与禹余粮丸。
+        89.	病人有寒，复发汗，胃中冷，必吐蛔。
+        90.	本发汗，而复下之，此为逆也；若先发汗，治不为逆。本先下之，而反汗之，为逆；若先下之，治不为逆。
+        91.	伤寒，医下之，续得下利清谷不止，身疼痛者，急当救里；后身疼痛，清便自调者，急当救表。救里宜四逆汤；救表宜桂枝汤。
+        92.	病发热头痛，脉反沉，若不瘥，身体疼痛，当救其里，四逆汤方。
+        93.	太阳病，先下而不愈，因复发汗，以此表里俱虚，其人因致冒，冒家汗出自愈。所以然者，汗出表和故也。里未和，然后复下之。
+        94.	太阳病未解，脉阴阳俱停，必先振栗汗出而解。
+        但阳脉微者，先汗出而解；但阴脉微者，下之而解。若欲下之，宜调胃承气汤。
+        95.	太阳病，发热汗出者，此为荣弱卫强，故使汗出，欲救邪风者，宜桂枝汤。
+        96.	伤寒五六日，中风，往来寒热，胸胁苦满，嘿嘿不欲饮食，心烦喜呕，或胸中烦而不呕，或渴，或腹中痛，或胁下痞硬，或心下悸、小便不利，或不渴、身有微热，或咳者，小柴胡汤主之。
+        97.	血弱气尽，腠理开，邪气因入，与正气相搏，结于胁下。正邪分争，往来寒热，休作有时，嘿嘿不欲饮食。脏腑相连，其痛必下，邪高痛下，故使呕也，小柴胡汤主之。
+        服柴胡汤已，渴者属阳明，以法治之。
+        98.	得病六七日，脉迟浮弱，{恶|误}风寒，手足温，医二三下之，不能食，而胁下满痛，面目及身黄，颈项强，小便难者，与柴胡汤，后必下重。本渴饮水而呕者，柴胡汤不中与也，食谷者哕。
+        99.	伤寒四五日，身热{恶|误}风，颈项强，胁下满，手足温而渴者，小柴胡汤主之。
+        100.	伤寒，阳脉涩，阴脉弦，法当腹中急痛，先与小建中汤。不瘥者，小柴胡汤主之。
+        101.	伤寒中风，有柴胡证，但见一证便是，不必悉具。
+        凡柴胡汤病证而下之，若柴胡证不罢者，复与柴胡汤，必蒸蒸而振，却复发热汗出而解。
+        102.	伤寒二三日，心中悸而烦者，小建中汤主之。
+        103.	太阳病，过经十余日，反二三下之，后四五日，柴胡证仍在者，先与小柴胡。呕不止，心下急，郁郁微烦者，为未解也，与大柴胡汤，下之则愈。
+        104.	伤寒十三日不解，胸胁满而呕，日晡所发潮热，已而微利。此本柴胡证，下之以不得利，今反利者，知医以丸药下之，此非其治也。潮热者，实也。先宜服小柴胡汤以解外，后以柴胡加芒硝汤主之。
+        105.	伤寒十三日，过经谵语者，以有热也，当以汤下之。若小便利者，大便当硬，而反下利，脉调和者，知医以丸药下之，非其治也。若自下利者，脉当微厥，今反和者，此为内实也，调胃承气汤主之。
+        106.	太阳病不解，热结膀胱，其人如狂，血自下，下者愈。其外不解者，尚未可攻，当先解其外。外解已，但少腹急结者，乃可攻之，宜桃核承气汤。
+        107.	伤寒八九日，下之，胸满烦惊，小便不利，谵语，一身尽重，不可转侧者，柴胡加龙骨牡蛎汤主之。
+        108.	伤寒，腹满谵语，寸口脉浮而紧，此肝乘脾也，名曰纵，刺期门。
+        109.	伤寒发热，啬啬{恶|误}寒，大渴欲饮水，其腹必满。自汗出，小便利，其病欲解。此肝乘肺也，名曰横，刺期门。
+        110.	太阳病，二日反躁，凡熨其背，而大汗出，大热入胃，胃中水竭，躁烦，必发谵语。十余日振栗自下利者，此为欲解也。故其汗从腰以下不得汗，欲小便不得，反呕，欲失溲，足下{恶|误}风，大便硬，小便当{数|硕}，而反不{数|硕}及不多，大便已，头卓然而痛，其人足心必热，谷气下流故也。
+        111.	太阳病中风，以火劫发汗，邪风被火热，血气流溢，失其常度。两阳相熏灼，其身发黄。阳盛则欲衄，阴虚小便难。阴阳俱虚竭，身体则枯燥，但头汗出，剂颈而还，腹满微喘，口干{咽|烟}烂，或不大便，久则谵语，甚者至哕，手足躁扰，捻衣摸床。小便利者，其人可治。
+        112.	伤寒脉浮，医以火迫劫之，亡阳必惊狂，卧起不安者，桂枝去芍药加蜀漆牡蛎龙骨救逆汤主之。
+        113.	形作伤寒，其脉不弦紧而弱，弱者必渴，被火必谵语。弱者发热脉浮，解之当汗出愈。
+        114.	太阳病，以火熏之，不得汗，其人必躁，到经不解，必清血，名为火邪。
+        115.	脉浮热甚，而反灸之，此为实，实以虚治，因火而动，必{咽|烟}燥吐血。
+        116.	微{数|硕}之脉，慎不可灸，因火为邪，则为烦逆，追虚逐实，血散脉中，火气虽微，内攻有力，焦骨伤筋，血难复也。
+        脉浮，宜以汗解，用火灸之，邪无从出，因火而盛，病从腰以下必重而痹，名火逆也。
+        欲自解者，必当先烦，烦乃有汗而解。何以知之？脉浮故知汗出解。
+        117.	烧针令其汗，针处被寒，核起而赤者，必发奔豚。气从少腹上冲心者，灸其核上各一壮，与桂枝加桂汤，更加桂二两也。
+        118.	火逆下之，因烧针烦躁者，桂枝甘草龙骨牡蛎汤主之。
+        119.	太阳伤寒者，加温针必惊也。
+        120.	太阳病，当{恶|误}寒发热，今自汗出，反不{恶|误}寒发热，关上脉细{数|硕}者，以医吐之过也。
+        一二日吐之者，腹中饥，口不能食；三四日吐之者，不喜糜粥，欲食冷食，朝食暮吐。以医吐之所致也，此为小逆。
+        121.	太阳病吐之，但太阳病当{恶|误}寒，今反不{恶|误}寒，不欲近衣，此为吐之内烦也。
+        122.	病人脉{数|硕}，{数|硕}为热，当消谷引食，而反吐者，此以发汗，令阳气微，膈气虚，脉乃{数|硕}也。{数|硕}为客热，不能消谷，以胃中虚冷，故吐也。
+        123.	太阳病，过经十余日，心下温温欲吐，而胸中痛，大便反溏，腹微满，郁郁微烦。先此时自极吐下者，与调胃承气汤。若不尔者，不可与。但欲呕，胸中痛，微溏者，此非柴胡汤证，以呕故知极吐下也。
+        124.	太阳病六七日，表证仍在，脉微而沉，反不结胸，其人发狂者，以热在下焦，少腹当硬满，小便自利者，下血乃愈。所以然者，以太阳随经，瘀热在里故也。抵当汤主之。
+        125.	太阳病，身黄，脉沉结，少腹硬，小便不利者，为无血也。小便自利，其人如狂者，血证谛也，抵当汤主之。
+        126.	伤寒有热，少腹满，应小便不利，今反利者，为有血也，当下之，不可余药，宜抵当丸。
+        127.	太阳病，小便利者，以饮水多，必心下悸；小便少者，必苦里急也。
+        =====
+        辨太阳病脉证并治下（128-178）
+        未完
+        =====
+        辨阳明病脉证并治（179-262）
+        未完
+        =====
+        辨少阳病脉证并治（263-272）
+        未完
+        =====
+        辨太阴病脉证并治（273-280）
+        未完
+        =====
+        辨少阴病脉证并治（281-325）
+        未完
+        =====
+        辨厥阴病脉证并治（326-381）
+        未完
+        =====
+        辨霍乱病脉证并治（382-391）
+        未完
+        =====
+        辨阴阳易瘥后劳复病脉证并治（392-398）
+        未完`;
+
+            // ====================== 数据集 ======================
+            let DATA = [];
+            // ====================== DOM 缓存 ======================
+            const $ = {
+                textBox: document.getElementById("textBox"),
+                chapterSelect: document.getElementById("chapterSelect"),
+                toggleAllBtn: document.getElementById("toggleAllBtn"),
+                modeSwitchBtn: document.getElementById("modeSwitchBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                statPanel: document.getElementById("statPanel"),
+                wechatTip: document.getElementById("wechatTip"),
+                ttsTip: document.getElementById("ttsTip"),
+                rate: document.getElementById("rate"),
+                pitch: document.getElementById("pitch"),
+                volume: document.getElementById("volume"),
+                voiceSelect: document.getElementById("voiceSelect"),
+                playBtn: document.getElementById("playBtn"),
+                pauseBtn: document.getElementById("pauseBtn"),
+                stopBtn: document.getElementById("stopBtn"),
+                importBtn: document.getElementById("importBtn"),
+                fileInput: document.getElementById("fileInput"),
+                loadJingluoBtn: document.getElementById("loadJingluoBtn"),
+                loadShanghanBtn: document.getElementById("loadShanghanBtn"),
+                ttsPanel: document.getElementById("ttsPanel"),
+                formatHelpBtn: document.getElementById("formatHelpBtn"),
+                formatModal: document.getElementById("formatModal"),
+                closeModalBtn: document.getElementById("closeModalBtn"),
+                currentProgress: document.getElementById("currentProgress")
+            };
+            // ====================== 全局状态 ======================
+            const state = {
+                isInputMode: false,
+                allAnswersVisible: false,
+                textCache: new Map(),
+                debounceTimer: null,
+                lastSelectVal: '',
+                synth: null,
+                voiceList: [],
+                voiceLoaded: false,
+                ttsSupported: true,
+                ttsQueue: [],
+                ttsIndex: 0,
+                isPlaying: false,
+                isPaused: false,
+                timeoutId: null,
+                isSpeaking: false
+            };
+            // ====================== 工具函数 ======================
+            const utils = {
+                debounce(fn, delay) {
+                    return (...args) => {
+                        clearTimeout(state.debounceTimer);
+                        state.debounceTimer = setTimeout(() => fn(...args), delay);
+                    };
+                },
+                normalizeStr(str) { return String(str).replace(/\s+/g, ''); },
+                getBtnHtml(text, hint) { return `${text}<span class="shortcut-hint">${hint}</span>`; },
+                getDisplayText(rawText) { return rawText.replace(CONST.PRONOUNCE_REG, '$1'); },
+                getSpeakText(rawText) {
+                    let text = rawText.replace(CONST.PRONOUNCE_REG, '$2');
+                    text = text.replace(CONST.BLANK_REG, '$1');
+                    for (let key in PRONUNCIATION_FIX) {
+                        if (PRONUNCIATION_FIX.hasOwnProperty(key)) {
+                            text = text.split(key).join(PRONUNCIATION_FIX[key]);
+                        }
+                    }
+                    return text;
+                },
+                splitSentences(text) {
+                    const parts = text.split(CONST.SENTENCE_SPLIT_REG);
+                    const sentences = [];
+                    let current = '';
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i].trim();
+                        if (!part) continue;
+                        if (/^[。；！？\n]$/.test(part)) {
+                            current += part;
+                            sentences.push(current);
+                            current = '';
+                        } else {
+                            current = part;
+                        }
+                    }
+                    if (current.trim()) sentences.push(current);
+                    return sentences.filter(s => s.trim().length > 0);
+                },
+                getAllText() { return DATA.map(item => `${item.text}`).join('\n\n'); },
+                parseTxtData(content) {
+                    const blocks = content.split(CONST.SPLIT_MARK).filter(b => b.trim());
+                    return blocks.map(block => {
+                        const lines = block.trim().split('\n').filter(l => l.trim());
+                        if (lines.length < 2) throw new Error('每篇内容至少包含标题行和正文行');
+                        const nameLine = lines[0].trim();
+                        const nameMatch = nameLine.match(/^(\d+)\.\s*(.+)$/);
+                        const name = nameMatch ? nameMatch[2] : nameLine;
+                        const text = lines.slice(1).join('\n');
+                        return { name, text };
+                    });
+                },
+                checkAnswer(inputEl) {
+                    const targetAns = inputEl.dataset.answer;
+                    const userInput = inputEl.value.trim();
+                    inputEl.classList.remove("correct", "wrong");
+                    if (!userInput) return false;
+                    const userClean = utils.normalizeStr(userInput);
+                    const ansClean = utils.normalizeStr(targetAns);
+                    if (userClean === ansClean) {
+                        inputEl.classList.add("correct");
+                        return true;
+                    } else {
+                        inputEl.classList.add("wrong");
+                        return false;
+                    }
+                },
+                updateStat() {
+                    const inputs = $.textBox.querySelectorAll('input');
+                    const total = inputs.length;
+                    const correct = Array.from(inputs).filter(i => i.classList.contains('correct')).length;
+                    const rate = total === 0 ? '0' : (correct / total * 100).toFixed(1);
+                    $.statPanel.innerText = `填空总数：${total} | 已答对：${correct} | 正确率：${rate}%`;
+                },
+                saveSelect(val) { try { localStorage.setItem(CONST.STORAGE_KEY, val); } catch (e) {} },
+                getLastSelect() { try { return localStorage.getItem(CONST.STORAGE_KEY) || ''; } catch (e) { return ''; } },
+                saveVoice(name) { try { localStorage.setItem(CONST.VOICE_KEY, name); } catch (e) {} },
+                getLastVoice() { try { return localStorage.getItem(CONST.VOICE_KEY) || ''; } catch (e) { return ''; } },
+                isWeChat() { return navigator.userAgent.toLowerCase().indexOf('micromessenger') !== -1; }
+            };
+
+            // ====================== 按钮状态 ======================
+            function updateButtonStates() {
+                const hasData = DATA.length > 0;
+                $.toggleAllBtn.disabled = !hasData;
+                $.modeSwitchBtn.disabled = !hasData;
+                $.resetBtn.disabled = !hasData;
+                const ttsEnabled = hasData && state.ttsSupported;
+                $.playBtn.disabled = !ttsEnabled;
+                $.pauseBtn.disabled = !ttsEnabled;
+                $.stopBtn.disabled = !ttsEnabled;
+                $.statPanel.style.display = hasData ? 'block' : 'none';
+                if (state.isPaused) {
+                    $.pauseBtn.innerHTML = utils.getBtnHtml('继续', CONST.HOTKEYS.TTS_PAUSE);
+                } else {
+                    $.pauseBtn.innerHTML = utils.getBtnHtml('暂停', CONST.HOTKEYS.TTS_PAUSE);
+                }
+            }
+
+            // ====================== 滑块值更新 ======================
+            function updateSliderDisplay(id, valId) {
+                const el = document.getElementById(id);
+                const display = document.getElementById(valId);
+                if (el && display) {
+                    display.textContent = parseFloat(el.value).toFixed(1);
+                }
+            }
+
+            // ====================== 加载预设 ======================
+            function loadPreset(rawContent, presetName) {
+                try {
+                    if (!rawContent.trim()) { alert('预设文本为空，请先粘贴内容到代码中。'); return; }
+                    const newData = utils.parseTxtData(rawContent);
+                    if (newData.length === 0) throw new Error('未识别到有效内容');
+                    newData.forEach((item, idx) => { item.id = idx + 1; });
+                    DATA = newData;
+                    state.textCache.clear();
+                    stopTTS();
+                    initSelect();
+                    $.chapterSelect.value = CONST.ALL_OPTION_VALUE;
+                    state.lastSelectVal = CONST.ALL_OPTION_VALUE;
+                    resetAll();
+                    updateButtonStates();
+                    alert(`✅ 成功加载「${presetName || '文本'}」共 ${newData.length} 篇内容。`);
+                } catch (err) {
+                    alert('加载失败：' + err.message);
+                }
+            }
+            // ====================== 下拉初始化 ======================
+            function initSelect() {
+                let optHtml = '';
+                if (DATA.length === 0) {
+                    optHtml = '<option value="" disabled>请载入文本或导入文件</option>';
+                    $.chapterSelect.innerHTML = optHtml;
+                    state.lastSelectVal = '';
+                    return;
+                }
+                optHtml += `<option value="${CONST.ALL_OPTION_VALUE}">All. 所有内容</option>`;
+                DATA.forEach(item => {
+                    optHtml += `<option value="${item.id}">${item.id}. ${item.name}</option>`;
+                });
+                $.chapterSelect.innerHTML = optHtml;
+                const lastVal = utils.getLastSelect();
+                const isValid = lastVal === CONST.ALL_OPTION_VALUE || DATA.some(item => item.id == lastVal);
+                $.chapterSelect.value = isValid ? lastVal : CONST.ALL_OPTION_VALUE;
+                state.lastSelectVal = $.chapterSelect.value;
+            }
+            // ====================== 文件导入 ======================
+            function handleFileImport(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const content = evt.target.result;
+                        let newData = [];
+                        if (file.name.endsWith('.json')) {
+                            newData = JSON.parse(content);
+                            if (!Array.isArray(newData)) throw new Error('JSON格式错误：必须是数组');
+                            newData.forEach((item, idx) => {
+                                if (!item.name || !item.text) throw new Error(
+                                    `JSON 第 ${idx+1} 项缺少 name 或 text 字段`);
+                            });
+                        } else if (file.name.endsWith('.txt')) {
+                            newData = utils.parseTxtData(content);
+                        } else {
+                            throw new Error('不支持的文件格式，仅支持 .txt 和 .json');
+                        }
+                        if (newData.length === 0) throw new Error('未识别到有效内容');
+                        newData.forEach((item, idx) => { item.id = idx + 1; });
+                        DATA = newData;
+                        state.textCache.clear();
+                        stopTTS();
+                        initSelect();
+                        $.chapterSelect.value = CONST.ALL_OPTION_VALUE;
+                        state.lastSelectVal = CONST.ALL_OPTION_VALUE;
+                        resetAll();
+                        updateButtonStates();
+                        alert(`导入成功！共加载 ${newData.length} 篇内容`);
+                    } catch (err) {
+                        alert('导入失败：' + err.message + '\n可点击「格式说明」查看正确写法');
+                    }
+                    $.fileInput.value = '';
+                };
+                reader.readAsText(file, 'UTF-8');
+            }
+            // ====================== 获取当前文本 ======================
+            function getCurrentRawText() {
+                const selectVal = $.chapterSelect.value;
+                if (selectVal === CONST.ALL_OPTION_VALUE) return utils.getAllText();
+                const item = DATA.find(d => d.id == selectVal);
+                return item ? item.text : '';
+            }
+
+            // ====================== 核心：渲染段落 ======================
+            const render = utils.debounce(function() {
+                const selectVal = $.chapterSelect.value;
+                if (!selectVal || DATA.length === 0) {
+                    $.textBox.innerHTML = '<div class="empty-tip">请点击上方按钮载入预设文本，或导入本地文件</div>';
+                    utils.updateStat();
+                    return;
+                }
+                let rawText;
+                if (state.textCache.has(selectVal)) {
+                    rawText = state.textCache.get(selectVal);
+                } else {
+                    rawText = getCurrentRawText();
+                    state.textCache.set(selectVal, rawText);
+                    utils.saveSelect(selectVal);
+                }
+                const displayText = utils.getDisplayText(rawText);
+                const paragraphs = displayText.split('\n').filter(p => p.trim() !== '');
+                const html = paragraphs.map((para, idx) => {
+                    const pContent = para.replace(CONST.BLANK_REG, (match, ans) => {
+                        const width = Math.max(CONST.MIN_BLANK_WIDTH, ans.length * CONST.INPUT_WIDTH_RATIO);
+                        if (state.isInputMode) {
+                            return `<span class="blank-item input-mode" style="width:${width}em;"><input type="text" data-answer="${ans}" autocomplete="off"></span>`;
+                        } else {
+                            const hideCls = state.allAnswersVisible ? "" : "hidden";
+                            return `<span class="blank-item click-mode ${hideCls}" style="width:${width}em;">${ans}</span>`;
+                        }
+                    });
+                    return `<p data-pidx="${idx}">
+                                <button class="play-btn" data-pidx="${idx}">▶</button>
+                                <span class="text-content">${pContent}</span>
+                            </p>`;
+                }).join("");
+                $.textBox.innerHTML = html;
+
+                $.textBox.querySelectorAll('.play-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const pidx = parseInt(this.dataset.pidx, 10);
+                        playFromParagraph(pidx);
+                    });
+                });
+
+                if (state.isInputMode) bindInputEvents();
+                utils.updateStat();
+            }, CONST.DEBOUNCE_DELAY);
+
+            // ====================== 输入框事件 ======================
+            function bindInputEvents() {
+                const inputList = $.textBox.querySelectorAll('input');
+                inputList.forEach(input => {
+                    input.oninput = function() { this.classList.remove("correct", "wrong"); };
+                    input.onblur = function() { utils.checkAnswer(this);
+                        utils.updateStat(); };
+                    input.onkeydown = function(e) {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        utils.checkAnswer(this);
+                        utils.updateStat();
+                        const allInputs = Array.from(inputList);
+                        const curIdx = allInputs.indexOf(this);
+                        let nextInput = null;
+                        for (let i = curIdx + 1; i < allInputs.length; i++) {
+                            if (!allInputs[i].classList.contains("correct")) {
+                                nextInput = allInputs[i];
+                                break;
+                            }
+                        }
+                        if (nextInput) {
+                            nextInput.focus();
+                            nextInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                    };
+                });
+            }
+            $.textBox.addEventListener('click', function(e) {
+                if (state.isInputMode) return;
+                const target = e.target.closest(".blank-item.click-mode");
+                if (!target) return;
+                target.classList.toggle("hidden");
+            });
+
+            // ====================== 填空控制 ======================
+            function toggleAllAnswers() {
+                if (state.isInputMode || DATA.length === 0) return;
+                state.allAnswersVisible = !state.allAnswersVisible;
+                $.textBox.querySelectorAll(".blank-item.click-mode").forEach(span => {
+                    span.classList.toggle("hidden", !state.allAnswersVisible);
+                });
+                const txt = state.allAnswersVisible ? "一键隐藏" : "一键显示";
+                $.toggleAllBtn.innerHTML = utils.getBtnHtml(txt, CONST.HOTKEYS.TOGGLE);
+            }
+
+            function switchMode() {
+                if (DATA.length === 0) return;
+                state.isInputMode = !state.isInputMode;
+                state.allAnswersVisible = false;
+                const btnTxt = state.isInputMode ? "切换点击" : "切换输入";
+                $.modeSwitchBtn.innerHTML = utils.getBtnHtml(btnTxt, CONST.HOTKEYS.MODE);
+                $.toggleAllBtn.innerHTML = utils.getBtnHtml("一键显示", CONST.HOTKEYS.TOGGLE);
+                $.toggleAllBtn.style.display = state.isInputMode ? "none" : "inline-block";
+                render();
+            }
+
+            function resetAll() {
+                state.allAnswersVisible = false;
+                $.toggleAllBtn.innerHTML = utils.getBtnHtml("一键显示", CONST.HOTKEYS.TOGGLE);
+                stopTTS();
+                render();
+            }
+
+            // ====================== TTS 核心 ======================
+            function initTTS() {
+                if (!window.speechSynthesis) {
+                    state.ttsSupported = false;
+                    $.ttsTip.style.display = 'block';
+                    $.ttsTip.innerText = '⚠ 当前浏览器不支持语音朗读功能，请使用Chrome、Edge、Safari等主流浏览器打开。';
+                    $.ttsPanel.style.display = 'none';
+                    $.playBtn.style.display = 'none';
+                    $.pauseBtn.style.display = 'none';
+                    $.stopBtn.style.display = 'none';
+                    updateButtonStates();
+                    return false;
+                }
+                state.synth = window.speechSynthesis;
+                const loadVoices = () => {
+                    state.voiceList = state.synth.getVoices();
+                    state.voiceLoaded = true;
+                    updateVoiceSelect();
+                };
+                loadVoices();
+                if (state.synth.onvoiceschanged !== undefined) {
+                    state.synth.onvoiceschanged = loadVoices;
+                }
+                setTimeout(() => {
+                    if (!state.voiceLoaded || state.voiceList.length === 0) {
+                        loadVoices();
+                    }
+                }, 3000);
+                setTimeout(() => {
+                    const hasZh = state.voiceList.some(v => v.lang.includes('zh') || v.lang.includes('CN'));
+                    if (!hasZh && state.voiceList.length > 0) {
+                        $.ttsTip.style.display = 'block';
+                        $.ttsTip.innerText = '⚠ 未检测到中文语音包，请在系统设置中安装中文文字转语音引擎后再试。';
+                    }
+                }, 1000);
+                return true;
+            }
+
+            function updateVoiceSelect() {
+                let html = '<option value="">系统默认（自动）</option>';
+                let zhVoices = state.voiceList.filter(v =>
+                    v.lang.includes('zh') || v.lang.includes('cmn') || v.name.includes('中文') || v.name.includes(
+                    'Chinese')
+                );
+                if (zhVoices.length === 0 && state.voiceList.length > 0) {
+                    zhVoices = state.voiceList;
+                }
+                zhVoices.forEach((v) => {
+                    html += `<option value="${v.name}">${v.name} (${v.lang})</option>`;
+                });
+                $.voiceSelect.innerHTML = html;
+                const lastVoice = utils.getLastVoice();
+                if (lastVoice && zhVoices.some(v => v.name === lastVoice)) {
+                    $.voiceSelect.value = lastVoice;
+                } else {
+                    $.voiceSelect.value = '';
+                }
+            }
+
+            function getSelectedVoice() {
+                const name = $.voiceSelect.value;
+                if (name === '') return null;
+                return state.voiceList.find(v => v.name === name) || null;
+            }
+
+            function updateProgress() {
+                const total = state.ttsQueue.length;
+                if (total === 0) {
+                    $.currentProgress.textContent = '未播放';
+                    return;
+                }
+                const current = Math.min(state.ttsIndex + 1, total);
+                $.currentProgress.textContent = `当前播放：${current} / ${total}`;
+            }
+
+            // ---- 播放当前句 ----
+            function playCurrentSentence() {
+                if (state.isPaused) {
+                    updateProgress();
+                    return;
+                }
+                if (state.ttsIndex >= state.ttsQueue.length) {
+                    state.isPlaying = false;
+                    state.isPaused = false;
+                    state.isSpeaking = false;
+                    $.currentProgress.textContent = '播放完成';
+                    updateButtonStates();
+                    return;
+                }
+                const text = state.ttsQueue[state.ttsIndex];
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.rate = Math.max(0.5, Math.min(2, Number($.rate.value)));
+                utter.pitch = Math.max(0, Math.min(2, Number($.pitch.value)));
+                utter.volume = Math.max(0, Math.min(1, Number($.volume.value)));
+                const voice = getSelectedVoice();
+                if (voice) utter.voice = voice;
+
+                utter.onend = () => {
+                    state.isSpeaking = false;
+                    if (state.isPaused) {
+                        updateProgress();
+                        return;
+                    }
+                    state.ttsIndex++;
+                    updateProgress();
+                    if (state.isPlaying && !state.isPaused) {
+                        state.timeoutId = setTimeout(playCurrentSentence, 150);
+                    }
+                };
+
+                utter.onerror = (e) => {
+                    console.warn('TTS单句播放失败，跳过继续', e);
+                    state.isSpeaking = false;
+                    if (state.isPaused) {
+                        updateProgress();
+                        return;
+                    }
+                    state.ttsIndex++;
+                    updateProgress();
+                    if (state.isPlaying && !state.isPaused) {
+                        state.timeoutId = setTimeout(playCurrentSentence, 100);
+                    }
+                };
+
+                try {
+                    state.isSpeaking = true;
+                    state.synth.speak(utter);
+                    state.isPlaying = true;
+                    updateProgress();
+                } catch (err) {
+                    console.error('播放异常', err);
+                    state.isSpeaking = false;
+                    if (!state.isPaused) {
+                        state.ttsIndex++;
+                        updateProgress();
+                        if (state.isPlaying && !state.isPaused) {
+                            state.timeoutId = setTimeout(playCurrentSentence, 100);
+                        }
+                    }
+                }
+            }
+
+            // ---- 暂停/继续 ----
+            function pauseTTS() {
+                if (!state.synth || !state.ttsSupported) return;
+                if (state.ttsQueue.length === 0 || state.ttsIndex >= state.ttsQueue.length) {
+                    return;
+                }
+
+                if (state.isPaused) {
+                    state.isPaused = false;
+                    state.isPlaying = true;
+                    if (state.timeoutId) {
+                        clearTimeout(state.timeoutId);
+                        state.timeoutId = null;
+                    }
+                    state.isSpeaking = false;
+                    playCurrentSentence();
+                    updateButtonStates();
+                    return;
+                } else {
+                    state.isPaused = true;
+                    if (!state.isSpeaking && state.ttsIndex > 0) {
+                        state.ttsIndex--;
+                        updateProgress();
+                    }
+                    state.synth.cancel();
+                    if (state.timeoutId) {
+                        clearTimeout(state.timeoutId);
+                        state.timeoutId = null;
+                    }
+                    state.isPlaying = false;
+                    state.isSpeaking = false;
+                    updateButtonStates();
+                    updateProgress();
+                }
+            }
+
+            // ---- 停止 ----
+            function stopTTS() {
+                state.isPlaying = false;
+                state.isPaused = false;
+                state.ttsQueue = [];
+                state.ttsIndex = 0;
+                if (state.synth) {
+                    state.synth.cancel();
+                }
+                if (state.timeoutId) {
+                    clearTimeout(state.timeoutId);
+                    state.timeoutId = null;
+                }
+                $.currentProgress.textContent = '已停止';
+                updateButtonStates();
+            }
+
+            // ---- 从指定段落开始播放 ----
+            function playFromParagraph(pidx) {
+                if (!state.ttsSupported) return;
+                if (DATA.length === 0) return;
+                const rawText = getCurrentRawText();
+                if (!rawText.trim()) return;
+                const speakText = utils.getSpeakText(rawText);
+                const allSentences = utils.splitSentences(speakText);
+                if (allSentences.length === 0) return;
+                const displayText = utils.getDisplayText(rawText);
+                const paragraphs = displayText.split('\n').filter(p => p.trim() !== '');
+                let charOffset = 0;
+                for (let i = 0; i < pidx; i++) {
+                    charOffset += paragraphs[i].length + 1;
+                }
+                let targetIndex = 0;
+                for (let i = 0; i < pidx; i++) {
+                    const paraRaw = paragraphs[i];
+                    const paraSpeak = utils.getSpeakText(paraRaw);
+                    const paraSentences = utils.splitSentences(paraSpeak);
+                    targetIndex += paraSentences.length;
+                }
+                if (targetIndex >= allSentences.length) {
+                    targetIndex = allSentences.length - 1;
+                }
+                stopTTS();
+                state.ttsQueue = allSentences;
+                state.ttsIndex = targetIndex;
+                state.isPaused = false;
+                state.isPlaying = true;
+                updateProgress();
+                playCurrentSentence();
+                updateButtonStates();
+            }
+
+            // ---- 播放全文 ----
+            function playTTS() {
+                if (!state.ttsSupported) return;
+                if (DATA.length === 0) return;
+                stopTTS();
+                const rawText = getCurrentRawText();
+                const speakText = utils.getSpeakText(rawText);
+                if (!speakText.trim()) return;
+                state.ttsQueue = utils.splitSentences(speakText);
+                state.ttsIndex = 0;
+                state.isPaused = false;
+                state.isPlaying = true;
+                updateProgress();
+                playCurrentSentence();
+                updateButtonStates();
+            }
+
+            // ====================== 快捷键 ======================
+            function bindHotkeys() {
+                document.addEventListener("keydown", (e) => {
+                    const tag = document.activeElement.tagName;
+                    if (["INPUT", "SELECT", "TEXTAREA"].includes(tag)) return;
+                    const key = e.key.toUpperCase();
+                    if (key === CONST.HOTKEYS.MODE) switchMode();
+                    else if (key === CONST.HOTKEYS.RESET) resetAll();
+                    else if (key === CONST.HOTKEYS.TTS_PLAY) playTTS();
+                    else if (key === CONST.HOTKEYS.TTS_PAUSE) pauseTTS();
+                    else if (key === CONST.HOTKEYS.TTS_STOP) stopTTS();
+                    else if (key === CONST.HOTKEYS.IMPORT) $.fileInput.click();
+                    else if (e.code === CONST.HOTKEYS.TOGGLE) {
+                        e.preventDefault();
+                        toggleAllAnswers();
+                    }
+                });
+            }
+
+            // ====================== 事件绑定 ======================
+            function bindEvents() {
+                $.loadJingluoBtn.addEventListener("click", () => loadPreset(PRESET_JINGLUO, "经络文本"));
+                $.loadShanghanBtn.addEventListener("click", () => loadPreset(PRESET_SHANGHAN, "伤寒论文本"));
+                $.chapterSelect.addEventListener("change", () => {
+                    const val = $.chapterSelect.value;
+                    if (val !== state.lastSelectVal) {
+                        state.lastSelectVal = val;
+                        stopTTS();
+                        resetAll();
+                    }
+                });
+                $.toggleAllBtn.addEventListener("click", toggleAllAnswers);
+                $.modeSwitchBtn.addEventListener("click", switchMode);
+                $.resetBtn.addEventListener("click", resetAll);
+                $.playBtn.addEventListener("click", playTTS);
+                $.pauseBtn.addEventListener("click", pauseTTS);
+                $.stopBtn.addEventListener("click", stopTTS);
+                $.voiceSelect.addEventListener("change", () => {
+                    utils.saveVoice($.voiceSelect.value);
+                });
+                $.rate.addEventListener("input", () => updateSliderDisplay("rate", "rateVal"));
+                $.pitch.addEventListener("input", () => updateSliderDisplay("pitch", "pitchVal"));
+                $.volume.addEventListener("input", () => updateSliderDisplay("volume", "volumeVal"));
+                $.importBtn.addEventListener("click", () => $.fileInput.click());
+                $.fileInput.addEventListener("change", handleFileImport);
+                $.formatHelpBtn.addEventListener("click", () => { $.formatModal.style.display = "flex"; });
+                $.closeModalBtn.addEventListener("click", () => { $.formatModal.style.display = "none"; });
+                $.formatModal.addEventListener("click", (e) => {
+                    if (e.target === $.formatModal) $.formatModal.style.display = "none";
+                });
+                if (utils.isWeChat()) {
+                    $.wechatTip.style.display = 'block';
+                    state.ttsSupported = false;
+                    $.ttsPanel.style.display = 'none';
+                    $.playBtn.style.display = 'none';
+                    $.pauseBtn.style.display = 'none';
+                    $.stopBtn.style.display = 'none';
+                }
+            }
+
+            // ====================== 初始化 ======================
+            function init() {
+                initSelect();
+                bindEvents();
+                bindHotkeys();
+                initTTS();
+                updateButtonStates();
+                render();
+                updateSliderDisplay("rate", "rateVal");
+                updateSliderDisplay("pitch", "pitchVal");
+                updateSliderDisplay("volume", "volumeVal");
+            }
+            init();
+        })();
+    </script>
+</body>
+</html>

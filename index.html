@@ -2,12 +2,138 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>完形填空（智能统计版）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>工具导航</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", system-ui, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: #f4f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .sub {
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+        .tools {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .tool-btn {
+            display: block;
+            background: #f8fafc;
+            border: 1px solid #e9edf4;
+            border-radius: 16px;
+            padding: 20px 24px;
+            text-decoration: none;
+            color: #1e293b;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .tool-btn:hover {
+            background: #f1f5f9;
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.08);
+        }
+        .tool-btn .icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+        .tool-btn .info {
+            flex: 1;
+        }
+        .tool-btn .info .name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .tool-btn .info .desc {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .tool-btn .arrow {
+            color: #94a3b8;
+            font-size: 20px;
+        }
+        .footer {
+            margin-top: 28px;
+            font-size: 13px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 30px 20px; }
+            .tool-btn { padding: 16px 18px; }
+            .tool-btn .icon { font-size: 28px; }
+            .tool-btn .info .name { font-size: 16px; }
+        }
+    </style>
 </head>
 <body>
-    <h2 class="title">完形填空（智能统计版）</h2>
-    <p><a href="经络完形填空6.html">经络完形填空</a></p>
-	<p><a href="伤寒论完形填空3.html">伤寒论完形填空</a></p>
+    <div class="container">
+        <h1>🛠 工具集</h1>
+        <p class="sub">点击下方按钮打开对应工具</p>
+
+        <div class="tools">
+            <a href="tcm-cloze-tts8.html" target="_blank" class="tool-btn">
+                <span class="icon">📖</span>
+                <span class="info">
+                    <span class="name">完形填空 · TTS朗读</span>
+                    <span class="desc">填空练习 + 语音朗读</span>
+                </span>
+                <span class="arrow">↗</span>
+            </a>
+			<a href="en-tts1.html" target="_blank" class="tool-btn">
+                <span class="icon">🎧</span>
+                <span class="info">
+                    <span class="name">英语听力练习</span>
+                    <span class="desc">英语听力练习，支持各种语速</span>
+                </span>
+                <span class="arrow">↗</span>
+            </a>
+			<a href="QRcode.html" target="_blank" class="tool-btn">
+                <span class="icon">📱</span>
+                <span class="info">
+                    <span class="name">二维码生成器</span>
+                    <span class="desc">生成并下载二维码图片</span>
+                </span>
+                <span class="arrow">↗</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            作者：盛亮
+        </div>
+    </div>
 </body>
 </html>
