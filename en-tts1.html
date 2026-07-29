@@ -435,59 +435,67 @@
         }
 
         @media (max-width: 640px) {
-            body {
-                padding: 0 12px calc(100px + env(safe-area-inset-bottom));
-            }
-            .title {
-                font-size: 20px;
-            }
-            .article {
-                padding: 16px 18px;
-                font-size: 16px;
-                line-height: 2.0;
-            }
-            .toolbar .btn {
-                padding: 7px 12px;
-                font-size: 13px;
-                flex: 1 1 auto;
-            }
-            .controls {
-                gap: 4px;
-                width: calc(100% - 16px);
-                padding: 6px 10px;
-                border-radius: 12px;
-            }
-            .controls .btn {
-                padding: 8px 10px;
-                font-size: 12px;
-                flex: 1 1 auto;
-                min-width: 48px;
-            }
-            .controls .shortcut-hint {
-                display: none;
-            }
-            .slider-group {
-                gap: 8px 16px;
-            }
-            .slider-item {
-                flex: 1 0 60px;
-                min-width: 50px;
-            }
-            .tts-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .tts-row .voice-group {
-                flex: 1 1 auto;
-            }
-            .select-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .modal-card {
-                padding: 18px 16px;
-            }
-        }
+			body {
+				padding: 0 12px calc(100px + env(safe-area-inset-bottom));
+			}
+			.title {
+				font-size: 20px;
+			}
+			.article {
+				padding: 16px 18px;
+				font-size: 16px;
+				line-height: 2.0;
+			}
+			.toolbar .btn {
+				padding: 7px 12px;
+				font-size: 13px;
+				flex: 1 1 auto;
+			}
+			.controls {
+				gap: 4px;
+				width: calc(100% - 16px);
+				padding: 6px 10px;
+				border-radius: 12px;
+			}
+			.controls .btn {
+				padding: 8px 10px;
+				font-size: 12px;
+				flex: 1 1 auto;
+				min-width: 48px;
+			}
+			.controls .shortcut-hint {
+				display: none;
+			}
+			/* 新增紧凑样式 */
+			.tts-panel {
+				padding: 12px 14px;
+			}
+			.tts-panel .tts-row {
+				gap: 6px 8px;
+			}
+			.slider-group {
+				gap: 6px 10px;
+			}
+			.slider-item {
+				flex: 1 0 50px;
+				min-width: 40px;
+			}
+			.slider-item label {
+				font-size: 11px;
+			}
+			.current-progress {
+				margin-top: 4px;
+				padding-top: 4px;
+				font-size: 13px;
+			}
+			.select-row {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.modal-card {
+				padding: 18px 16px;
+			}
+		}
         @media (max-width: 400px) {
             .article {
                 font-size: 14px;
@@ -504,7 +512,7 @@
 <body>
 
     <h1 class="title">📖 英文TTS · 高亮跟读</h1>
-    <p class="sub-title">导入 .txt 文件 · 标题也会被朗读 · 点击任意句子即可从该处开始</p>
+    <p class="sub-title">导入 .txt 文件，点击任意句子即可从该处开始</p>
 
     <div class="tip-warn" id="wechatTip">⚠️ 微信内置浏览器可能不支持语音朗读，请点击右上角「在浏览器打开」使用。</div>
     <div class="tip-info" id="ttsTip"></div>

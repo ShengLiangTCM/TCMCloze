@@ -496,10 +496,10 @@
                 gap: 4px;
             }
             .controls-row button {
-                padding: 9px 4px;
-                font-size: 12px;
+                padding: 14px 8px;
+                font-size: 16px;
                 flex: 1 1 0;
-                min-width: 0;
+                min-width: 52px;
             }
             .shortcut-hint {
                 display: none;
@@ -520,8 +520,9 @@
 
         @media (max-width: 400px) {
             .controls-row button {
-                font-size: 10px;
-                padding: 7px 2px;
+                font-size: 14px;
+                padding: 12px 6px;
+				min-height: 48px;
             }
             .controls {
                 padding: 4px 6px;
@@ -535,13 +536,13 @@
 </head>
 <body>
     <h2 class="title">完形填空 · 语音朗读</h2>
-    <div class="tip-warn" id="wechatTip">提示：微信内置浏览器不支持语音朗读，请点击右上角【在浏览器打开】，使用系统自带浏览器使用。</div>
+    <div class="tip-warn" id="wechatTip">⚠ 提示：微信内置浏览器不支持语音朗读，请点击右上角【在浏览器打开】，使用系统自带浏览器使用。</div>
     <div class="tip-info" id="ttsTip"></div>
     <div class="select-bar">
-        <button class="btn-preset btn-preset-primary" id="loadJingluoBtn">载入经络文本</button>
-        <button class="btn-preset btn-preset-purple" id="loadShanghanBtn">载入伤寒论文本</button>
-        <button class="btn-import" id="importBtn">导入本地文件<span class="shortcut-hint">L</span></button>
-        <button class="btn-preset btn-preset-purple" id="formatHelpBtn">格式说明</button>
+        <button class="btn-preset btn-preset-primary" id="loadJingluoBtn">📜 载入经络文本</button>
+        <button class="btn-preset btn-preset-purple" id="loadShanghanBtn">📜 载入伤寒论文本</button>
+        <button class="btn-import" id="importBtn">📁 导入本地文件<span class="shortcut-hint">L</span></button>
+        <button class="btn-preset btn-preset-purple" id="formatHelpBtn">❓ 格式说明</button>
         <input type="file" id="fileInput" accept=".txt,.json">
     </div>
     <div class="select-bar"><select id="chapterSelect"></select></div>
@@ -600,14 +601,14 @@
                 <p><strong>示例（TXT）：</strong></p>
                 <pre>=====
 手太阴肺经
-1. 肺【手太阴】之脉，起于【中焦】，下络【大肠】，{还|环}循【胃口】。
+肺【手太阴】之脉，起于【中焦】，下络【大肠】，{还|环}循【胃口】……
 =====
 手阳明大肠经
-2. 大肠【手阳明】之脉，起于【大指次指】之端，循【指上廉】，出【合谷两骨之间】。</pre>
+大肠【手阳明】之脉，起于【大指次指】之端，循【指上廉】，出【合谷两骨之间】……</pre>
                 <p><strong>示例（JSON）：</strong></p>
                 <pre>[
-  {"name":"手太阴肺经","text":"肺【手太阴】之脉，起于【中焦】..."},
-  {"name":"足太阴脾经","text":"脾【足太阴】之脉...注【心中】。\n脾之大络，名曰【大包】..."},
+  {"name":"手太阴肺经","text":"肺【手太阴】之脉，起于【中焦】……"},
+  {"name":"足太阴脾经","text":"脾【足太阴】之脉……注【心中】。\n脾之大络，名曰【大包】……"},
 ]</pre>
                 <p style="color: var(--gray); font-size: 13px;">注：保存为 UTF-8 编码的 .txt 或 .json 文件即可导入。</p>
             </div>
@@ -629,7 +630,7 @@
                 SPLIT_MARK: '=====',
                 ALL_OPTION_VALUE: 'all',
                 SENTENCE_SPLIT_REG: /([。；！？\n])/g,
-                HOTKEYS: { MODE: 'M', RESET: 'C', TOGGLE: 'Space', TTS_PLAY: 'R', TTS_PAUSE: 'P', TTS_STOP: 'S',
+                HOTKEYS: { MODE: 'M', RESET: 'C', TOGGLE: '空格', TTS_PLAY: 'R', TTS_PAUSE: 'P', TTS_STOP: 'S',
                     IMPORT: 'L' }
             };
             // ====================== 发音修正映射表 ======================
